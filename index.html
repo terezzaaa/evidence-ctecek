@@ -1,0 +1,106 @@
+
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Evidence čteček</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    main {
+      max-width: 480px;
+      margin: 20px auto;
+      padding: 24px;
+      background: white;
+      border-radius: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      border: 0;
+      border-radius: 10px;
+      background: #ffdf00;
+      font-size: 17px;
+      font-weight: bold;
+    }
+    #reader { margin-top: 20px; }
+    #status { margin-top: 16px; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>Evidence čteček</h2>
+    <p>Naskenuj QR kód na skladové čtečce.</p>
+    <button id="start">📷 Spustit skener</button>
+    <div id="reader"></div>
+    <p id="status">Připraveno ke skenování.</p>
+  </main>
+
+  <script>
+    const statusEl = document.getElementById("status");
+    let scanner;
+    let processing = false;
+
+    document.getElementById("start").addEventListener("click", async () => {
+      if (typeof Html5Qrcode === "undefined") {
+        statusEl.textContent =
+          "Skener se nenačetl. Zkontroluj připojení k internetu.";
+        return;
+      }
+
+      document.getElementById("start").disabled = true;
+      statusEl.textContent = "Spouštím kameru…";
+
+      try {
+        scanner = new Html5Qrcode("reader");
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 180 } },
+          async (decodedText) => {
+            if (processing) return;
+            processing = true;
+
+            const id = decodedText.trim();
+
+            if (!/^CZ-GBO-PDA-[A-Za-z0-9-]+$/.test(id)) {
+              statusEl.textContent =
+                "QR kód nemá očekávaný formát čísla čtečky: " + id;
+              processing = false;
+              return;
+            }
+
+            statusEl.textContent = "Načteno: " + id +
+              ". Otevírám formulář…";
+
+            try {
+              await scanner.stop();
+            } catch (e) {}
+
+            const formUrl =
+              "https://docs.google.com/forms/d/e/1FAIpQLSd1DO9hPpF8DVkzXm4cCspXxnHZwXu-9VKeDtFXZFXhoOYlDg/viewform?usp=pp_url&entry.955748812=" +
+              encodeURIComponent(id);
+
+            window.location.href = formUrl;
+          },
+          () => {}
+        );
+
+        statusEl.textContent =
+          "Namiř zadní kameru na QR kód čtečky.";
+      } catch (error) {
+        statusEl.textContent =
+          "Kameru se nepodařilo spustit: " +
+          (error.message || String(error));
+        document.getElementById("start").disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
