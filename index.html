@@ -69,7 +69,7 @@
 
             const id = decodedText.trim();
 
-            if (!/^CZ-GBO-PDA-[A-Za-z0-9-]+$/.test(id)) {
+            if (!/^(CZ-GBO-PDA-[A-Za-z0-9-]+|Mobil-[A-Za-z0-9-]+)$/i.test(id)) {
               statusEl.textContent =
                 "QR kód nemá očekávaný formát čísla čtečky: " + id;
               processing = false;
